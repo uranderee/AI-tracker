@@ -1,456 +1,613 @@
-
-<h2 class="sr-only">AI-powered personal resolution tracker for setting, monitoring, and achieving yearly goals</h2>
-
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=DM+Sans:wght@300;400;500&display=swap');
-
-  :root {
-    --rt-gold: #C9A84C;
-    --rt-gold-light: #F0D898;
-    --rt-gold-dark: #8A6A1A;
-    --rt-ink: var(--color-text-primary);
-    --rt-muted: var(--color-text-secondary);
-    --rt-surface: var(--color-background-secondary);
-    --rt-border: var(--color-border-tertiary);
-    --rt-card: var(--color-background-primary);
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  #rt-app {
-    font-family: 'DM Sans', sans-serif;
-    padding: 1.5rem 0;
-    min-height: 600px;
-  }
-
-  .rt-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 1.5rem;
-    border-bottom: 0.5px solid var(--rt-border);
-    padding-bottom: 1rem;
-  }
-
-  .rt-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--rt-ink);
-    letter-spacing: -0.3px;
-  }
-
-  .rt-year {
-    font-size: 13px;
-    color: var(--rt-muted);
-    font-weight: 300;
-  }
-
-  .rt-tabs {
-    display: flex;
-    gap: 4px;
-    background: var(--rt-surface);
-    border-radius: var(--border-radius-md);
-    padding: 3px;
-    margin-bottom: 1.5rem;
-  }
-
-  .rt-tab {
-    flex: 1;
-    padding: 7px 10px;
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
-    border: none;
-    background: transparent;
-    color: var(--rt-muted);
-    cursor: pointer;
-    border-radius: 6px;
-    transition: all 0.15s;
-    font-weight: 400;
-  }
-
-  .rt-tab.active {
-    background: var(--rt-card);
-    color: var(--rt-ink);
-    font-weight: 500;
-    border: 0.5px solid var(--rt-border);
-  }
-
-  .rt-section { display: none; }
-  .rt-section.active { display: block; }
-
-  .rt-goal-card {
-    background: var(--rt-card);
-    border: 0.5px solid var(--rt-border);
-    border-radius: var(--border-radius-lg);
-    padding: 1rem 1.25rem;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: border-color 0.15s;
-    position: relative;
-  }
-
-  .rt-goal-card:hover { border-color: var(--color-border-secondary); }
-
-  .rt-goal-card.selected { border-color: var(--rt-gold); border-width: 1px; }
-
-  .rt-goal-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 8px;
-  }
-
-  .rt-goal-name {
-    font-weight: 500;
-    font-size: 15px;
-    color: var(--rt-ink);
-    line-height: 1.4;
-  }
-
-  .rt-goal-category {
-    font-size: 11px;
-    font-weight: 500;
-    padding: 3px 8px;
-    border-radius: 20px;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .cat-health    { background: #EAF3DE; color: #3B6D11; }
-  .cat-career    { background: #E6F1FB; color: #185FA5; }
-  .cat-finance   { background: #FAEEDA; color: #854F0B; }
-  .cat-personal  { background: #EEEDFE; color: #534AB7; }
-  .cat-learning  { background: #E1F5EE; color: #0F6E56; }
-  .cat-social    { background: #FBEAF0; color: #993556; }
-
-  .rt-progress-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .rt-progress-bar {
-    flex: 1;
-    height: 4px;
-    background: var(--rt-surface);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .rt-progress-fill {
-    height: 100%;
-    border-radius: 4px;
-    background: var(--rt-gold);
-    transition: width 0.4s ease;
-  }
-
-  .rt-progress-pct {
-    font-size: 12px;
-    color: var(--rt-muted);
-    min-width: 30px;
-    text-align: right;
-    font-weight: 500;
-  }
-
-  .rt-goal-meta {
-    font-size: 12px;
-    color: var(--rt-muted);
-    margin-bottom: 8px;
-  }
-
-  .rt-add-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 500;
-    background: var(--rt-gold);
-    color: #fff;
-    border: none;
-    border-radius: var(--border-radius-md);
-    cursor: pointer;
-    transition: opacity 0.15s;
-  }
-
-  .rt-add-btn:hover { opacity: 0.85; }
-
-  .rt-form {
-    background: var(--rt-card);
-    border: 0.5px solid var(--rt-border);
-    border-radius: var(--border-radius-lg);
-    padding: 1.25rem;
-    margin-bottom: 1rem;
-  }
-
-  .rt-form label {
-    display: block;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--rt-muted);
-    margin-bottom: 5px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .rt-form input, .rt-form select, .rt-form textarea {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    margin-bottom: 12px;
-    width: 100%;
-  }
-
-  .rt-form textarea { resize: vertical; min-height: 70px; }
-
-  .rt-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-  .rt-form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
-
-  .rt-btn-secondary {
-    padding: 7px 14px;
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
-    background: transparent;
-    border: 0.5px solid var(--color-border-secondary);
-    border-radius: var(--border-radius-md);
-    cursor: pointer;
-    color: var(--rt-ink);
-    transition: background 0.1s;
-  }
-
-  .rt-btn-secondary:hover { background: var(--rt-surface); }
-
-  .rt-btn-primary {
-    padding: 7px 16px;
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
-    background: var(--rt-ink);
-    color: var(--rt-card);
-    border: none;
-    border-radius: var(--border-radius-md);
-    cursor: pointer;
-    font-weight: 500;
-    transition: opacity 0.15s;
-  }
-
-  .rt-btn-primary:hover { opacity: 0.8; }
-
-  .rt-empty {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--rt-muted);
-    font-size: 14px;
-  }
-
-  .rt-empty i { font-size: 36px; display: block; margin-bottom: 12px; opacity: 0.3; }
-
-  .rt-detail-pane {
-    background: var(--rt-card);
-    border: 0.5px solid var(--rt-border);
-    border-radius: var(--border-radius-lg);
-    padding: 1.25rem;
-    margin-bottom: 1rem;
-  }
-
-  .rt-detail-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-    border-bottom: 0.5px solid var(--rt-border);
-    padding-bottom: 1rem;
-  }
-
-  .rt-detail-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 18px;
-    font-weight: 500;
-    color: var(--rt-ink);
-    margin-bottom: 4px;
-  }
-
-  .rt-update-area textarea {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    width: 100%;
-    resize: vertical;
-    min-height: 80px;
-    margin-bottom: 8px;
-  }
-
-  .rt-update-actions { display: flex; gap: 8px; align-items: center; }
-
-  .rt-ai-feedback {
-    margin-top: 12px;
-    padding: 12px 14px;
-    border-radius: var(--border-radius-md);
-    font-size: 13px;
-    line-height: 1.7;
-    border-left: 3px solid var(--rt-gold);
-    background: var(--rt-surface);
-    color: var(--rt-ink);
-    position: relative;
-  }
-
-  .rt-ai-label {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--rt-gold-dark);
-    margin-bottom: 5px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .rt-logs { margin-top: 1rem; }
-
-  .rt-log-entry {
-    padding: 10px 0;
-    border-bottom: 0.5px solid var(--rt-border);
-    font-size: 13px;
-    line-height: 1.6;
-  }
-
-  .rt-log-entry:last-child { border-bottom: none; }
-
-  .rt-log-date { font-size: 11px; color: var(--rt-muted); margin-bottom: 3px; }
-
-  .rt-progress-slider { margin: 1rem 0; }
-  .rt-progress-slider label {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 12px;
-    color: var(--rt-muted);
-    margin-bottom: 8px;
-  }
-  .rt-progress-slider label span { font-size: 15px; font-weight: 500; color: var(--rt-ink); }
-
-  .rt-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 1.5rem;
-  }
-
-  .rt-stat {
-    background: var(--rt-surface);
-    border-radius: var(--border-radius-md);
-    padding: 12px 14px;
-    text-align: center;
-  }
-
-  .rt-stat-num {
-    font-size: 24px;
-    font-weight: 500;
-    font-family: 'Playfair Display', serif;
-    color: var(--rt-ink);
-  }
-
-  .rt-stat-label { font-size: 12px; color: var(--rt-muted); margin-top: 2px; }
-
-  .rt-insights-panel {
-    background: var(--rt-card);
-    border: 0.5px solid var(--rt-border);
-    border-radius: var(--border-radius-lg);
-    overflow: hidden;
-  }
-
-  .rt-insights-header {
-    padding: 12px 1.25rem;
-    border-bottom: 0.5px solid var(--rt-border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .rt-insights-header h3 {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--rt-ink);
-  }
-
-  .rt-insight-item {
-    padding: 12px 1.25rem;
-    border-bottom: 0.5px solid var(--rt-border);
-    font-size: 13px;
-    line-height: 1.6;
-    color: var(--rt-ink);
-  }
-
-  .rt-insight-item:last-child { border-bottom: none; }
-
-  .rt-insight-item i { color: var(--rt-gold); margin-right: 8px; font-size: 16px; vertical-align: -3px; }
-
-  .rt-loading {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--rt-muted);
-    padding: 8px 0;
-  }
-
-  .rt-spinner {
-    width: 14px; height: 14px;
-    border: 2px solid var(--rt-border);
-    border-top-color: var(--rt-gold);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    flex-shrink: 0;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .rt-delete-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--rt-muted);
-    font-size: 16px;
-    padding: 2px 4px;
-    border-radius: 4px;
-    transition: color 0.1s;
-    opacity: 0;
-    transition: opacity 0.15s;
-  }
-
-  .rt-goal-card:hover .rt-delete-btn { opacity: 1; }
-  .rt-delete-btn:hover { color: #E24B4A; opacity: 1; }
-
-  .rt-no-goal {
-    padding: 2rem;
-    text-align: center;
-    font-size: 14px;
-    color: var(--rt-muted);
-  }
-
-  .rt-no-goal i { display: block; font-size: 28px; opacity: 0.3; margin-bottom: 8px; }
-</style>
-
-<div id="rt-app">
-  <div class="rt-header">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resolution Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #C9A84C;
+      --gold-dark: #8A6A1A;
+      --ink: #1a1a1a;
+      --muted: #666;
+      --surface: #f5f4f0;
+      --border: rgba(0,0,0,0.12);
+      --border-hover: rgba(0,0,0,0.25);
+      --card: #fff;
+      --bg: #fafaf8;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --danger: #E24B4A;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --ink: #f0ede8;
+        --muted: #999;
+        --surface: #2a2a28;
+        --border: rgba(255,255,255,0.1);
+        --border-hover: rgba(255,255,255,0.25);
+        --card: #1e1e1c;
+        --bg: #141412;
+        --gold-dark: #C9A84C;
+      }
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    #app {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 1.5rem;
+      border-bottom: 0.5px solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    .title {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: -0.3px;
+    }
+
+    .year-label { font-size: 13px; color: var(--muted); font-weight: 300; margin-top: 2px; }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      padding: 3px;
+      margin-bottom: 1.5rem;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-family: 'DM Sans', sans-serif;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.15s;
+      font-weight: 400;
+    }
+
+    .tab.active {
+      background: var(--card);
+      color: var(--ink);
+      font-weight: 500;
+      border: 0.5px solid var(--border);
+    }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ── Goal cards ── */
+    .goal-card {
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+      position: relative;
+    }
+
+    .goal-card:hover { border-color: var(--border-hover); }
+    .goal-card.selected { border: 1px solid var(--gold); }
+
+    .goal-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .goal-name { font-weight: 500; font-size: 15px; color: var(--ink); line-height: 1.4; }
+
+    .goal-category {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: 20px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .cat-health   { background: #EAF3DE; color: #3B6D11; }
+    .cat-career   { background: #E6F1FB; color: #185FA5; }
+    .cat-finance  { background: #FAEEDA; color: #854F0B; }
+    .cat-personal { background: #EEEDFE; color: #534AB7; }
+    .cat-learning { background: #E1F5EE; color: #0F6E56; }
+    .cat-social   { background: #FBEAF0; color: #993556; }
+
+    .progress-row { display: flex; align-items: center; gap: 10px; }
+
+    .progress-bar {
+      flex: 1; height: 4px;
+      background: var(--surface);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: var(--gold);
+      transition: width 0.4s ease;
+    }
+
+    .progress-pct {
+      font-size: 12px;
+      color: var(--muted);
+      min-width: 30px;
+      text-align: right;
+      font-weight: 500;
+    }
+
+    .goal-meta { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 16px;
+      padding: 2px 4px;
+      border-radius: 4px;
+      opacity: 0;
+      transition: opacity 0.15s, color 0.1s;
+    }
+
+    .goal-card:hover .delete-btn { opacity: 1; }
+    .delete-btn:hover { color: var(--danger); }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      background: var(--ink);
+      color: var(--card);
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .btn-primary:hover { opacity: 0.8; }
+
+    .btn-gold {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      background: var(--gold);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .btn-gold:hover { opacity: 0.85; }
+
+    .btn-secondary {
+      padding: 7px 14px;
+      font-size: 13px;
+      font-family: 'DM Sans', sans-serif;
+      background: transparent;
+      border: 0.5px solid var(--border-hover);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      color: var(--ink);
+      transition: background 0.1s;
+    }
+
+    .btn-secondary:hover { background: var(--surface); }
+
+    /* ── Form ── */
+    .form {
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .form label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form input, .form select, .form textarea {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      margin-bottom: 12px;
+      width: 100%;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 8px 10px;
+      background: var(--bg);
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .form input:focus, .form select:focus, .form textarea:focus {
+      border-color: var(--gold);
+    }
+
+    .form textarea { resize: vertical; min-height: 70px; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+
+    /* ── Empty states ── */
+    .empty {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .empty i { font-size: 36px; display: block; margin-bottom: 12px; opacity: 0.3; }
+
+    /* ── Detail / Log pane ── */
+    .detail-pane {
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+      border-bottom: 0.5px solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    .detail-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+
+    .update-area textarea {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      width: 100%;
+      resize: vertical;
+      min-height: 80px;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 8px 10px;
+      background: var(--bg);
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.15s;
+      margin-bottom: 8px;
+    }
+
+    .update-area textarea:focus { border-color: var(--gold); }
+
+    .update-actions { display: flex; gap: 8px; align-items: center; }
+
+    /* ── AI feedback ── */
+    .ai-feedback {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      line-height: 1.7;
+      border-left: 3px solid var(--gold);
+      background: var(--surface);
+      color: var(--ink);
+    }
+
+    .ai-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--gold-dark);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Logs ── */
+    .logs { margin-top: 1rem; }
+
+    .log-section-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .log-entry {
+      padding: 10px 0;
+      border-bottom: 0.5px solid var(--border);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .log-entry:last-child { border-bottom: none; }
+
+    .log-date { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+
+    .log-feedback {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 5px;
+      font-style: italic;
+      border-left: 2px solid var(--gold);
+      padding-left: 8px;
+    }
+
+    /* ── Slider ── */
+    .slider-row { margin: 1rem 0; }
+
+    .slider-row label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .slider-row label span { font-size: 15px; font-weight: 500; color: var(--ink); }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--gold);
+      cursor: pointer;
+    }
+
+    /* ── Stats ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat {
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 28px;
+      font-weight: 500;
+      font-family: 'Playfair Display', serif;
+      color: var(--ink);
+    }
+
+    .stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Insights panel ── */
+    .insights-panel {
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .insights-header {
+      padding: 12px 1.25rem;
+      border-bottom: 0.5px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .insights-header h3 {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .insights-header h3 i { color: var(--gold); }
+
+    .insight-item {
+      padding: 12px 1.25rem;
+      border-bottom: 0.5px solid var(--border);
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--ink);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .insight-item:last-child { border-bottom: none; }
+    .insight-item i { color: var(--gold); font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+
+    /* ── Loading ── */
+    .loading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      padding: 8px 0;
+    }
+
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Log tab empty ── */
+    .no-goal-msg {
+      padding: 2rem;
+      text-align: center;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .no-goal-msg i { display: block; font-size: 28px; opacity: 0.3; margin-bottom: 8px; }
+
+    /* ── API key notice ── */
+    .api-notice {
+      background: #FAEEDA;
+      color: #854F0B;
+      border: 0.5px solid #EF9F27;
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .api-notice i { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+
+    .api-key-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      align-items: center;
+    }
+
+    .api-key-row input {
+      flex: 1;
+      font-family: 'DM Sans', monospace;
+      font-size: 13px;
+      padding: 6px 10px;
+      border: 0.5px solid #EF9F27;
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.6);
+      color: #4a2a00;
+      outline: none;
+    }
+
+    select {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      width: 100%;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 8px 10px;
+      background: var(--bg);
+      color: var(--ink);
+      outline: none;
+      margin-bottom: 12px;
+      transition: border-color 0.15s;
+      cursor: pointer;
+    }
+
+    select:focus { border-color: var(--gold); }
+
+    @media (max-width: 480px) {
+      .form-row { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+      .title { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <div class="header">
     <div>
-      <div class="rt-title">Resolution Tracker</div>
-      <div class="rt-year" id="rt-year-label">Your 2026 Goals</div>
+      <div class="title">Resolution Tracker</div>
+      <div class="year-label" id="year-label">Your 2026 Goals</div>
     </div>
-    <button class="rt-add-btn" onclick="openAddForm()">
+    <button class="btn-gold" onclick="openAddForm()">
       <i class="ti ti-plus" aria-hidden="true"></i> New Goal
     </button>
   </div>
 
-  <div class="rt-tabs">
-    <button class="rt-tab active" onclick="switchTab('goals', this)"><i class="ti ti-target" aria-hidden="true"></i> Goals</button>
-    <button class="rt-tab" onclick="switchTab('log', this)"><i class="ti ti-pencil" aria-hidden="true"></i> Log Update</button>
-    <button class="rt-tab" onclick="switchTab('overview', this)"><i class="ti ti-chart-bar" aria-hidden="true"></i> Overview</button>
+  <!-- API Key Notice -->
+  <div class="api-notice" id="api-notice">
+    <i class="ti ti-key" aria-hidden="true"></i>
+    <div>
+      <strong>Add your Anthropic API key</strong> to unlock AI coaching and insights. Your key is stored only in your browser.
+      <div class="api-key-row">
+        <input type="password" id="api-key-input" placeholder="sk-ant-..." />
+        <button class="btn-secondary" onclick="saveApiKey()" style="white-space:nowrap">Save key</button>
+      </div>
+      <div style="margin-top:6px;font-size:12px;opacity:0.8">
+        Get your key at <a href="https://console.anthropic.com" target="_blank" style="color:inherit;">console.anthropic.com</a>. Free tier available.
+      </div>
+    </div>
   </div>
 
-  <div id="tab-goals" class="rt-section active">
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('goals', this)"><i class="ti ti-target" aria-hidden="true"></i> Goals</button>
+    <button class="tab" onclick="switchTab('log', this)"><i class="ti ti-pencil" aria-hidden="true"></i> Log Update</button>
+    <button class="tab" onclick="switchTab('overview', this)"><i class="ti ti-chart-bar" aria-hidden="true"></i> Overview</button>
+  </div>
+
+  <!-- GOALS TAB -->
+  <div id="tab-goals" class="section active">
     <div id="add-form-container" style="display:none;">
-      <div class="rt-form">
-        <div class="rt-form-row">
+      <div class="form">
+        <div class="form-row">
           <div>
             <label>Goal name</label>
             <input type="text" id="new-goal-name" placeholder="e.g. Run a 5K" />
@@ -471,388 +628,407 @@
         <textarea id="new-goal-why" placeholder="Describe your motivation and what success looks like..."></textarea>
         <label>Target deadline (optional)</label>
         <input type="date" id="new-goal-deadline" style="margin-bottom:0" />
-        <div class="rt-form-actions">
-          <button class="rt-btn-secondary" onclick="closeAddForm()">Cancel</button>
-          <button class="rt-btn-primary" onclick="addGoal()">Add Goal</button>
+        <div class="form-actions" style="margin-top:12px;">
+          <button class="btn-secondary" onclick="closeAddForm()">Cancel</button>
+          <button class="btn-primary" onclick="addGoal()">Add Goal</button>
         </div>
       </div>
     </div>
-
     <div id="goals-list"></div>
   </div>
 
-  <div id="tab-log" class="rt-section">
-    <div id="goal-selector-log" style="margin-bottom: 1rem;">
-      <label style="display:block; font-size:12px; font-weight:500; color:var(--rt-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">Select a goal</label>
-      <select id="log-goal-select" style="font-family:'DM Sans',sans-serif; font-size:14px; width:100%;">
+  <!-- LOG TAB -->
+  <div id="tab-log" class="section">
+    <div style="margin-bottom:1rem;">
+      <label style="display:block;font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Select a goal</label>
+      <select id="log-goal-select" onchange="renderLogPane(this.value)">
         <option value="">— pick a goal —</option>
       </select>
     </div>
-
     <div id="log-detail-area">
-      <div class="rt-no-goal">
+      <div class="no-goal-msg">
         <i class="ti ti-list-check" aria-hidden="true"></i>
         Select a goal above to log progress
       </div>
     </div>
   </div>
 
-  <div id="tab-overview" class="rt-section">
-    <div class="rt-stats-grid">
-      <div class="rt-stat">
-        <div class="rt-stat-num" id="stat-total">0</div>
-        <div class="rt-stat-label">Total goals</div>
+  <!-- OVERVIEW TAB -->
+  <div id="tab-overview" class="section">
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="stat-num" id="stat-total">0</div>
+        <div class="stat-label">Total goals</div>
       </div>
-      <div class="rt-stat">
-        <div class="rt-stat-num" id="stat-avg">0%</div>
-        <div class="rt-stat-label">Avg progress</div>
+      <div class="stat">
+        <div class="stat-num" id="stat-avg">0%</div>
+        <div class="stat-label">Avg progress</div>
       </div>
-      <div class="rt-stat">
-        <div class="rt-stat-num" id="stat-logs">0</div>
-        <div class="rt-stat-label">Updates logged</div>
+      <div class="stat">
+        <div class="stat-num" id="stat-logs">0</div>
+        <div class="stat-label">Updates logged</div>
       </div>
     </div>
 
-    <div class="rt-insights-panel">
-      <div class="rt-insights-header">
-        <h3><i class="ti ti-bulb" aria-hidden="true" style="margin-right:6px; color:var(--rt-gold);"></i>AI Insights</h3>
-        <button class="rt-btn-secondary" onclick="generateInsights()" style="font-size:12px; padding:5px 10px;">Refresh ↗</button>
+    <div class="insights-panel">
+      <div class="insights-header">
+        <h3><i class="ti ti-bulb" aria-hidden="true"></i>AI Insights</h3>
+        <button class="btn-secondary" onclick="generateInsights()" style="font-size:12px;padding:5px 10px;">Refresh ↻</button>
       </div>
       <div id="insights-content">
-        <div class="rt-insight-item" style="color:var(--rt-muted);">Add goals and log updates to get personalized AI insights on your progress.</div>
+        <div class="insight-item" style="color:var(--muted);">Add goals and log updates, then click Refresh to get personalised AI insights.</div>
       </div>
     </div>
   </div>
+
 </div>
 
 <script>
-let goals = [];
-let logs = [];
+  let goals = [];
+  let logs = [];
+  let apiKey = '';
 
-function getYear() { return new Date().getFullYear(); }
+  function getApiKey() {
+    return apiKey || localStorage.getItem('rt_apikey') || '';
+  }
 
-function save() {
-  try {
+  function saveApiKey() {
+    const k = document.getElementById('api-key-input').value.trim();
+    if (!k) return;
+    apiKey = k;
+    localStorage.setItem('rt_apikey', k);
+    document.getElementById('api-notice').style.display = 'none';
+    alert('API key saved! AI features are now active.');
+  }
+
+  function checkApiKey() {
+    const k = localStorage.getItem('rt_apikey');
+    if (k) {
+      apiKey = k;
+      document.getElementById('api-key-input').value = k;
+      document.getElementById('api-notice').style.display = 'none';
+    }
+  }
+
+  function uid() { return 'g' + Date.now() + Math.random().toString(36).slice(2, 6); }
+
+  function catLabel(c) {
+    return { health: 'Health', career: 'Career', finance: 'Finance', personal: 'Personal', learning: 'Learning', social: 'Social' }[c] || c;
+  }
+
+  function formatDate(d) {
+    if (!d) return '';
+    return new Date(d).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function save() {
     localStorage.setItem('rt_goals', JSON.stringify(goals));
     localStorage.setItem('rt_logs', JSON.stringify(logs));
-  } catch(e) {}
-}
-
-function load() {
-  try {
-    const g = localStorage.getItem('rt_goals');
-    const l = localStorage.getItem('rt_logs');
-    if (g) goals = JSON.parse(g);
-    if (l) logs = JSON.parse(l);
-  } catch(e) {}
-  if (!goals.length) seedSampleData();
-}
-
-function seedSampleData() {
-  goals = [
-    { id: 'g1', name: 'Run a half marathon', category: 'health', why: 'Improve cardiovascular health and prove I can do it', deadline: '2026-10-01', progress: 35, created: '2026-01-01' },
-    { id: 'g2', name: 'Read 24 books', category: 'learning', why: 'Expand knowledge and reduce screen time', deadline: '2026-12-31', progress: 20, created: '2026-01-01' },
-    { id: 'g3', name: 'Save R50,000', category: 'finance', why: 'Build emergency fund and feel financially secure', deadline: '2026-12-31', progress: 45, created: '2026-01-01' },
-  ];
-  logs = [
-    { id: 'l1', goalId: 'g1', text: 'Ran 8km today, felt strong after the first 3km', date: '2026-04-28', feedback: '' },
-    { id: 'l2', goalId: 'g2', text: 'Finished Atomic Habits — amazing book on habits. That's 5 books done.', date: '2026-04-20', feedback: '' },
-    { id: 'l3', goalId: 'g3', text: 'Transferred R3,000 to savings this month, skipped eating out twice', date: '2026-04-30', feedback: '' },
-  ];
-}
-
-function uid() { return 'g' + Date.now() + Math.random().toString(36).slice(2,6); }
-
-function catLabel(c) {
-  const m = { health:'Health', career:'Career', finance:'Finance', personal:'Personal', learning:'Learning', social:'Social' };
-  return m[c] || c;
-}
-
-function formatDate(d) {
-  if (!d) return '';
-  const dt = new Date(d);
-  return dt.toLocaleDateString('en-ZA', { day:'numeric', month:'short', year:'numeric' });
-}
-
-function renderGoals() {
-  const el = document.getElementById('goals-list');
-  if (!goals.length) {
-    el.innerHTML = '<div class="rt-empty"><i class="ti ti-target" aria-hidden="true"></i>No goals yet. Click "New Goal" to get started.</div>';
-    return;
   }
-  el.innerHTML = goals.map(g => `
-    <div class="rt-goal-card" id="gc-${g.id}" onclick="selectGoal('${g.id}')">
-      <div class="rt-goal-top">
-        <div class="rt-goal-name">${g.name}</div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span class="rt-goal-category cat-${g.category}">${catLabel(g.category)}</span>
-          <button class="rt-delete-btn" onclick="deleteGoal(event,'${g.id}')" title="Remove goal"><i class="ti ti-x" aria-hidden="true"></i></button>
-        </div>
-      </div>
-      ${g.deadline ? `<div class="rt-goal-meta">Target: ${formatDate(g.deadline)}</div>` : ''}
-      <div class="rt-progress-row">
-        <div class="rt-progress-bar"><div class="rt-progress-fill" style="width:${g.progress}%"></div></div>
-        <div class="rt-progress-pct">${g.progress}%</div>
-      </div>
-    </div>
-  `).join('');
-}
 
-function renderLogSelect() {
-  const sel = document.getElementById('log-goal-select');
-  sel.innerHTML = '<option value="">— pick a goal —</option>' +
-    goals.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
-}
-
-function renderStats() {
-  document.getElementById('stat-total').textContent = goals.length;
-  const avg = goals.length ? Math.round(goals.reduce((s,g) => s+g.progress, 0) / goals.length) : 0;
-  document.getElementById('stat-avg').textContent = avg + '%';
-  document.getElementById('stat-logs').textContent = logs.length;
-}
-
-function renderAll() {
-  renderGoals();
-  renderLogSelect();
-  renderStats();
-}
-
-function selectGoal(id) {
-  document.querySelectorAll('.rt-goal-card').forEach(c => c.classList.remove('selected'));
-  const card = document.getElementById('gc-' + id);
-  if (card) card.classList.add('selected');
-}
-
-function openAddForm() {
-  document.getElementById('add-form-container').style.display = 'block';
-  document.getElementById('new-goal-name').focus();
-}
-
-function closeAddForm() {
-  document.getElementById('add-form-container').style.display = 'none';
-  document.getElementById('new-goal-name').value = '';
-  document.getElementById('new-goal-why').value = '';
-  document.getElementById('new-goal-deadline').value = '';
-}
-
-function addGoal() {
-  const name = document.getElementById('new-goal-name').value.trim();
-  if (!name) { document.getElementById('new-goal-name').focus(); return; }
-  const g = {
-    id: uid(),
-    name,
-    category: document.getElementById('new-goal-cat').value,
-    why: document.getElementById('new-goal-why').value.trim(),
-    deadline: document.getElementById('new-goal-deadline').value,
-    progress: 0,
-    created: new Date().toISOString().split('T')[0]
-  };
-  goals.push(g);
-  save();
-  closeAddForm();
-  renderAll();
-}
-
-function deleteGoal(e, id) {
-  e.stopPropagation();
-  goals = goals.filter(g => g.id !== id);
-  logs = logs.filter(l => l.goalId !== id);
-  save();
-  renderAll();
-  document.getElementById('log-detail-area').innerHTML = '<div class="rt-no-goal"><i class="ti ti-list-check" aria-hidden="true"></i>Select a goal above to log progress</div>';
-}
-
-function switchTab(name, btn) {
-  document.querySelectorAll('.rt-section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.rt-tab').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  btn.classList.add('active');
-  if (name === 'overview') renderStats();
-}
-
-document.getElementById('log-goal-select').addEventListener('change', function() {
-  const id = this.value;
-  if (!id) {
-    document.getElementById('log-detail-area').innerHTML = '<div class="rt-no-goal"><i class="ti ti-list-check" aria-hidden="true"></i>Select a goal above to log progress</div>';
-    return;
+  function load() {
+    try {
+      const g = localStorage.getItem('rt_goals');
+      const l = localStorage.getItem('rt_logs');
+      if (g) goals = JSON.parse(g);
+      if (l) logs = JSON.parse(l);
+    } catch (e) {}
+    if (!goals.length) seedSample();
   }
-  renderLogPane(id);
-});
 
-function renderLogPane(goalId) {
-  const g = goals.find(x => x.id === goalId);
-  if (!g) return;
-  const goalLogs = logs.filter(l => l.goalId === goalId).slice().reverse();
-  const pane = document.getElementById('log-detail-area');
+  function seedSample() {
+    goals = [
+      { id: 'g1', name: 'Run a half marathon', category: 'health', why: 'Improve cardiovascular health and prove I can do it', deadline: '2026-10-01', progress: 35, created: '2026-01-01' },
+      { id: 'g2', name: 'Read 24 books', category: 'learning', why: 'Expand knowledge and reduce screen time', deadline: '2026-12-31', progress: 20, created: '2026-01-01' },
+      { id: 'g3', name: 'Save R50,000', category: 'finance', why: 'Build emergency fund and feel financially secure', deadline: '2026-12-31', progress: 45, created: '2026-01-01' },
+    ];
+    logs = [
+      { id: 'l1', goalId: 'g1', text: 'Ran 8km today — felt strong after the first 3km', date: '2026-04-28', feedback: '' },
+      { id: 'l2', goalId: 'g2', text: 'Finished Atomic Habits. That\'s 5 books done!', date: '2026-04-20', feedback: '' },
+      { id: 'l3', goalId: 'g3', text: 'Transferred R3,000 to savings this month', date: '2026-04-30', feedback: '' },
+    ];
+  }
 
-  pane.innerHTML = `
-    <div class="rt-detail-pane">
-      <div class="rt-detail-header">
-        <div>
-          <div class="rt-detail-title">${g.name}</div>
-          <span class="rt-goal-category cat-${g.category}" style="font-size:11px;">${catLabel(g.category)}</span>
+  function renderGoals() {
+    const el = document.getElementById('goals-list');
+    if (!goals.length) {
+      el.innerHTML = '<div class="empty"><i class="ti ti-target" aria-hidden="true"></i>No goals yet. Click "New Goal" to get started.</div>';
+      return;
+    }
+    el.innerHTML = goals.map(g => `
+      <div class="goal-card" id="gc-${g.id}" onclick="selectGoal('${g.id}')">
+        <div class="goal-top">
+          <div class="goal-name">${escHtml(g.name)}</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="goal-category cat-${g.category}">${catLabel(g.category)}</span>
+            <button class="delete-btn" onclick="deleteGoal(event,'${g.id}')" title="Remove goal"><i class="ti ti-x" aria-hidden="true"></i></button>
+          </div>
         </div>
-        <div style="text-align:right">
-          <div style="font-size:22px;font-weight:500;font-family:'Playfair Display',serif;color:var(--rt-ink)">${g.progress}%</div>
-          <div style="font-size:11px;color:var(--rt-muted)">complete</div>
+        ${g.deadline ? `<div class="goal-meta">Target: ${formatDate(g.deadline)}</div>` : ''}
+        <div class="progress-row">
+          <div class="progress-bar"><div class="progress-fill" style="width:${g.progress}%"></div></div>
+          <div class="progress-pct">${g.progress}%</div>
         </div>
       </div>
+    `).join('');
+  }
 
-      <div class="rt-progress-slider">
-        <label>Progress <span id="slider-val-${g.id}">${g.progress}%</span></label>
-        <input type="range" min="0" max="100" step="1" value="${g.progress}" id="slider-${g.id}"
-          oninput="updateSlider('${g.id}', this.value)" />
-      </div>
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
 
-      <div class="rt-update-area">
-        <label style="display:block;font-size:12px;font-weight:500;color:var(--rt-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Log update</label>
-        <textarea id="update-text-${g.id}" placeholder="What progress did you make? Any wins, setbacks, or insights? Be honest — the AI will give you better feedback with more detail."></textarea>
-        <div class="rt-update-actions">
-          <button class="rt-btn-primary" onclick="submitUpdate('${g.id}')">
-            <i class="ti ti-sparkles" aria-hidden="true"></i> Save &amp; Get AI Feedback ↗
-          </button>
-        </div>
-        <div id="feedback-area-${g.id}"></div>
-      </div>
+  function renderLogSelect() {
+    const sel = document.getElementById('log-goal-select');
+    sel.innerHTML = '<option value="">— pick a goal —</option>' +
+      goals.map(g => `<option value="${g.id}">${escHtml(g.name)}</option>`).join('');
+  }
 
-      ${goalLogs.length ? `
-        <div class="rt-logs">
-          <div style="font-size:12px;font-weight:500;color:var(--rt-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Update history</div>
-          ${goalLogs.map(l => `
-            <div class="rt-log-entry">
-              <div class="rt-log-date">${formatDate(l.date)}</div>
-              <div>${l.text}</div>
-              ${l.feedback ? `<div style="font-size:12px;color:var(--rt-muted);margin-top:5px;font-style:italic;border-left:2px solid var(--rt-gold);padding-left:8px;">${l.feedback}</div>` : ''}
-            </div>
-          `).join('')}
-        </div>
-      ` : ''}
-    </div>
-  `;
-}
+  function renderStats() {
+    document.getElementById('stat-total').textContent = goals.length;
+    const avg = goals.length ? Math.round(goals.reduce((s, g) => s + g.progress, 0) / goals.length) : 0;
+    document.getElementById('stat-avg').textContent = avg + '%';
+    document.getElementById('stat-logs').textContent = logs.length;
+  }
 
-function updateSlider(goalId, val) {
-  document.getElementById('slider-val-' + goalId).textContent = val + '%';
-  const g = goals.find(x => x.id === goalId);
-  if (g) {
-    g.progress = parseInt(val);
-    const fill = document.querySelector(`#gc-${goalId} .rt-progress-fill`);
-    const pct = document.querySelector(`#gc-${goalId} .rt-progress-pct`);
-    if (fill) fill.style.width = val + '%';
-    if (pct) pct.textContent = val + '%';
-    save();
+  function renderAll() {
+    renderGoals();
+    renderLogSelect();
     renderStats();
   }
-}
 
-async function submitUpdate(goalId) {
-  const g = goals.find(x => x.id === goalId);
-  if (!g) return;
-  const text = document.getElementById('update-text-' + goalId).value.trim();
-  if (!text) { document.getElementById('update-text-' + goalId).focus(); return; }
+  function selectGoal(id) {
+    document.querySelectorAll('.goal-card').forEach(c => c.classList.remove('selected'));
+    const card = document.getElementById('gc-' + id);
+    if (card) card.classList.add('selected');
+  }
 
-  const fbArea = document.getElementById('feedback-area-' + goalId);
-  fbArea.innerHTML = '<div class="rt-loading"><div class="rt-spinner"></div> Getting AI feedback...</div>';
+  function openAddForm() {
+    document.getElementById('add-form-container').style.display = 'block';
+    document.getElementById('new-goal-name').focus();
+  }
 
-  const logEntry = {
-    id: uid(),
-    goalId,
-    text,
-    date: new Date().toISOString().split('T')[0],
-    feedback: ''
-  };
+  function closeAddForm() {
+    document.getElementById('add-form-container').style.display = 'none';
+    ['new-goal-name', 'new-goal-why', 'new-goal-deadline'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('new-goal-cat').value = 'health';
+  }
 
-  const goalLogs = logs.filter(l => l.goalId === goalId);
-  const prompt = `You are a supportive but honest personal coach helping someone track their New Year's resolutions.
+  function addGoal() {
+    const name = document.getElementById('new-goal-name').value.trim();
+    if (!name) { document.getElementById('new-goal-name').focus(); return; }
+    goals.push({
+      id: uid(),
+      name,
+      category: document.getElementById('new-goal-cat').value,
+      why: document.getElementById('new-goal-why').value.trim(),
+      deadline: document.getElementById('new-goal-deadline').value,
+      progress: 0,
+      created: new Date().toISOString().split('T')[0]
+    });
+    save();
+    closeAddForm();
+    renderAll();
+  }
+
+  function deleteGoal(e, id) {
+    e.stopPropagation();
+    if (!confirm('Remove this goal and all its logs?')) return;
+    goals = goals.filter(g => g.id !== id);
+    logs = logs.filter(l => l.goalId !== id);
+    save();
+    renderAll();
+    document.getElementById('log-detail-area').innerHTML =
+      '<div class="no-goal-msg"><i class="ti ti-list-check" aria-hidden="true"></i>Select a goal above to log progress</div>';
+  }
+
+  function switchTab(name, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+    if (name === 'overview') renderStats();
+  }
+
+  function renderLogPane(goalId) {
+    const g = goals.find(x => x.id === goalId);
+    const pane = document.getElementById('log-detail-area');
+    if (!goalId || !g) {
+      pane.innerHTML = '<div class="no-goal-msg"><i class="ti ti-list-check" aria-hidden="true"></i>Select a goal above to log progress</div>';
+      return;
+    }
+    const goalLogs = logs.filter(l => l.goalId === goalId).slice().reverse();
+
+    pane.innerHTML = `
+      <div class="detail-pane">
+        <div class="detail-header">
+          <div>
+            <div class="detail-title">${escHtml(g.name)}</div>
+            <span class="goal-category cat-${g.category}" style="font-size:11px;">${catLabel(g.category)}</span>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:26px;font-weight:500;font-family:'Playfair Display',serif;color:var(--ink);">${g.progress}%</div>
+            <div style="font-size:11px;color:var(--muted);">complete</div>
+          </div>
+        </div>
+
+        <div class="slider-row">
+          <label>Progress <span id="sv-${g.id}">${g.progress}%</span></label>
+          <input type="range" min="0" max="100" step="1" value="${g.progress}" id="sl-${g.id}"
+            oninput="updateSlider('${g.id}', this.value)" />
+        </div>
+
+        <div class="update-area">
+          <label style="display:block;font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Log update</label>
+          <textarea id="ut-${g.id}" placeholder="What progress did you make? Any wins, setbacks, or insights? Be specific for better AI feedback."></textarea>
+          <div class="update-actions">
+            <button class="btn-primary" onclick="submitUpdate('${g.id}')">
+              <i class="ti ti-sparkles" aria-hidden="true"></i> Save &amp; Get AI Feedback
+            </button>
+          </div>
+          <div id="fb-${g.id}"></div>
+        </div>
+
+        ${goalLogs.length ? `
+          <div class="logs">
+            <div class="log-section-label">Update history</div>
+            ${goalLogs.map(l => `
+              <div class="log-entry">
+                <div class="log-date">${formatDate(l.date)}</div>
+                <div>${escHtml(l.text)}</div>
+                ${l.feedback ? `<div class="log-feedback">${escHtml(l.feedback)}</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  function updateSlider(goalId, val) {
+    document.getElementById('sv-' + goalId).textContent = val + '%';
+    const g = goals.find(x => x.id === goalId);
+    if (g) {
+      g.progress = parseInt(val);
+      const fill = document.querySelector(`#gc-${goalId} .progress-fill`);
+      const pct = document.querySelector(`#gc-${goalId} .progress-pct`);
+      if (fill) fill.style.width = val + '%';
+      if (pct) pct.textContent = val + '%';
+      save();
+      renderStats();
+    }
+  }
+
+  async function submitUpdate(goalId) {
+    const g = goals.find(x => x.id === goalId);
+    if (!g) return;
+    const text = document.getElementById('ut-' + goalId).value.trim();
+    if (!text) { document.getElementById('ut-' + goalId).focus(); return; }
+
+    const fbArea = document.getElementById('fb-' + goalId);
+    fbArea.innerHTML = '<div class="loading"><div class="spinner"></div> Getting AI feedback...</div>';
+
+    const logEntry = { id: uid(), goalId, text, date: new Date().toISOString().split('T')[0], feedback: '' };
+
+    const key = getApiKey();
+    if (key) {
+      const goalLogs = logs.filter(l => l.goalId === goalId);
+      const prompt = `You are a supportive but honest personal coach helping someone track their New Year's resolutions.
 
 Goal: "${g.name}"
 Category: ${g.category}
-Why it matters to them: "${g.why || 'Not specified'}"
+Why it matters: "${g.why || 'Not specified'}"
 Current progress: ${g.progress}%
-${g.deadline ? `Target deadline: ${g.deadline}` : ''}
+${g.deadline ? `Deadline: ${g.deadline}` : ''}
 
-Previous updates (most recent first):
+Recent updates:
 ${goalLogs.slice(-3).reverse().map(l => `- ${l.date}: ${l.text}`).join('\n') || 'No previous updates'}
 
-New update from today:
+New update:
 "${text}"
 
-Give a short, warm, and genuinely useful response (3-5 sentences). Acknowledge what they shared specifically. Offer one concrete, actionable suggestion. If there are patterns across updates, mention them. Be honest if they seem stuck. Avoid generic platitudes.`;
+Give a warm, honest response (3-5 sentences). Acknowledge what they shared specifically. Offer one concrete, actionable suggestion. Mention patterns if relevant. Avoid generic platitudes.`;
 
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const data = await resp.json();
-    const feedback = data.content?.[0]?.text || '';
-    logEntry.feedback = feedback;
+      try {
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+          body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+        });
+        const data = await resp.json();
+        const feedback = data.content?.[0]?.text || '';
+        logEntry.feedback = feedback;
+        fbArea.innerHTML = `
+          <div class="ai-feedback">
+            <div class="ai-label"><i class="ti ti-sparkles" aria-hidden="true"></i> AI Coach</div>
+            ${escHtml(feedback)}
+          </div>`;
+      } catch (e) {
+        fbArea.innerHTML = '<div style="font-size:13px;color:#E24B4A;padding:8px 0;">Could not reach AI. Update saved locally.</div>';
+      }
+    } else {
+      fbArea.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:8px 0;">Add your Anthropic API key above to get AI feedback.</div>';
+    }
 
-    fbArea.innerHTML = `
-      <div class="rt-ai-feedback">
-        <div class="rt-ai-label"><i class="ti ti-sparkles" aria-hidden="true"></i> AI Coach</div>
-        ${feedback}
-      </div>`;
-  } catch(e) {
-    fbArea.innerHTML = '<div style="font-size:13px;color:var(--color-text-danger);padding:8px 0;">Could not connect to AI. Update saved locally.</div>';
+    logs.push(logEntry);
+    document.getElementById('ut-' + goalId).value = '';
+    save();
+    renderStats();
+    renderLogPane(goalId);
+    document.getElementById('log-goal-select').value = goalId;
   }
 
-  logs.push(logEntry);
-  document.getElementById('update-text-' + goalId).value = '';
-  save();
-  renderStats();
-}
+  async function generateInsights() {
+    const el = document.getElementById('insights-content');
+    if (!goals.length) {
+      el.innerHTML = '<div class="insight-item" style="color:var(--muted);">Add goals first to get insights.</div>';
+      return;
+    }
+    const key = getApiKey();
+    if (!key) {
+      el.innerHTML = '<div class="insight-item" style="color:var(--muted);">Add your Anthropic API key to get AI insights.</div>';
+      return;
+    }
 
-async function generateInsights() {
-  const el = document.getElementById('insights-content');
-  if (!goals.length) {
-    el.innerHTML = '<div class="rt-insight-item" style="color:var(--rt-muted);">Add goals first to get insights.</div>';
-    return;
-  }
+    el.innerHTML = '<div class="insight-item"><div class="loading"><div class="spinner"></div> Analysing your progress...</div></div>';
 
-  el.innerHTML = '<div class="rt-insight-item"><div class="rt-loading"><div class="rt-spinner"></div> Analysing your progress...</div></div>';
+    const summary = goals.map(g => {
+      const glogs = logs.filter(l => l.goalId === g.id);
+      return `Goal: "${g.name}" (${g.category}) — ${g.progress}% complete. ${glogs.length} update(s). Last: "${glogs.slice(-1)[0]?.text || 'none'}"`;
+    }).join('\n');
 
-  const summary = goals.map(g => {
-    const glogs = logs.filter(l => l.goalId === g.id);
-    return `Goal: "${g.name}" (${g.category}) — ${g.progress}% complete. ${glogs.length} update(s). Last update: "${glogs.slice(-1)[0]?.text || 'none'}"`;
-  }).join('\n');
-
-  const prompt = `Analyse these personal goals and give 3 brief, specific insights. Each insight should be 1-2 sentences, actionable and encouraging but honest. Focus on patterns, momentum, and what needs attention.
+    const prompt = `Analyse these personal goals and give 3 brief, specific insights. Each 1-2 sentences, actionable and honest.
 
 ${summary}
 
-Respond ONLY with a JSON array of 3 strings, no markdown, no extra text. Example: ["insight 1","insight 2","insight 3"]`;
+Respond ONLY with a JSON array of 3 strings, no markdown, no preamble. Example: ["insight 1","insight 2","insight 3"]`;
 
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const data = await resp.json();
-    const raw = data.content?.[0]?.text || '[]';
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const insights = JSON.parse(clean);
-    const icons = ['ti-trending-up', 'ti-bulb', 'ti-alert-triangle'];
-    el.innerHTML = insights.map((ins, i) => `
-      <div class="rt-insight-item">
-        <i class="ti ${icons[i]||'ti-star'}" aria-hidden="true"></i>${ins}
-      </div>`).join('');
-  } catch(e) {
-    el.innerHTML = '<div class="rt-insight-item" style="color:var(--rt-muted);">Could not load insights. Check connection and try again.</div>';
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+      });
+      const data = await resp.json();
+      const raw = data.content?.[0]?.text || '[]';
+      const insights = JSON.parse(raw.replace(/```json|```/g, '').trim());
+      const icons = ['ti-trending-up', 'ti-bulb', 'ti-alert-triangle'];
+      el.innerHTML = insights.map((ins, i) => `
+        <div class="insight-item">
+          <i class="ti ${icons[i] || 'ti-star'}" aria-hidden="true"></i>
+          <span>${escHtml(ins)}</span>
+        </div>`).join('');
+    } catch (e) {
+      el.innerHTML = '<div class="insight-item" style="color:var(--muted);">Could not load insights. Check your API key and try again.</div>';
+    }
   }
-}
 
-load();
-renderAll();
-document.getElementById('rt-year-label').textContent = 'Your ' + getYear() + ' Goals';
+  // Init
+  load();
+  checkApiKey();
+  renderAll();
+  document.getElementById('year-label').textContent = 'Your ' + new Date().getFullYear() + ' Goals';
 </script>
+</body>
+</html>
